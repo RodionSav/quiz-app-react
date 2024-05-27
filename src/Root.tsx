@@ -3,7 +3,7 @@ import { HashRouter, Route, Routes } from "react-router-dom"
 import { store } from "./app/store"
 import App from "./App"
 import QuizPage from "./Components/QuizPage/QuizPage"
-import QuizResult from "./Components/QuizResult/QuizResult"
+import { QuizResult } from "./Components/QuizResult/QuizResult"
 
 export const Root = () => {
   return (

@@ -40,8 +40,8 @@ export const QuizForm = () => {
           onChange={handleTitleChange}
           placeholder="Enter quiz name"
         />
-        <button 
-          onClick={handleCreate} 
+        <button
+          onClick={handleCreate}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Save

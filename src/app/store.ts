@@ -1,9 +1,11 @@
 import { Action, ThunkAction, configureStore } from "@reduxjs/toolkit";
 import quizReducer from "../Components/features/quizSlicer";
+import usersReducer from "../Components/features/usersSlicer";
 
 export const store = configureStore({
   reducer: {
     quizzes: quizReducer,
+    users: usersReducer
   },
 });
 

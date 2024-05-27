@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import * as actions from '../features/quizSlicer';
+import * as quizActions from '../features/quizSlicer';
+import * as usersActions from '../features/usersSlicer';
 import cn from 'classnames';
 
 const QuizPage = () => {
@@ -15,9 +16,27 @@ const QuizPage = () => {
   const [quizMode, setQuizMode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
   const [timeExpired, setTimeExpired] = useState(false);
-  const [answers, setAnswers] = useState<{ [key: number]: string }>({});
+  const [answers, setAnswers] = useState<{ [key: number]: number[] }>({});
+  const [correctAnswers, setCorrectAnswers] = useState<{ [key: number]: boolean[] }>({});
+  const [questionTitles, setQuestionTitles] = useState<{ [key: number]: string }>({});
+  const [playerName, setPlayerName] = useState('');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const users = useAppSelector(state => state.users.items);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (quiz) {
+      const titles: { [key: number]: string } = {};
+      quiz.questions.forEach(question => {
+        titles[question.id] = question.text;
+        question.answers.forEach(answer => {
+          titles[answer.id] = answer.text;
+        });
+      });
+      setQuestionTitles(titles);
+    }
+  }, [quiz]);
 
   useEffect(() => {
     if (!quizMode) return;
@@ -41,7 +60,7 @@ const QuizPage = () => {
   }, [currentQuestionIndex, quizMode]);
 
   if (!quiz) {
-    return <div className="text-center text-red-500 text-lg font-semibold">Вікторину не знайдено</div>;
+    return <div className="text-center text-red-500 text-lg font-semibold">Quiz is not found</div>;
   }
 
   const handleQuestionChange = (e: { target: { value: React.SetStateAction<string>; }; }) => {
@@ -57,14 +76,14 @@ const QuizPage = () => {
     };
 
     if (question.trim()) {
-      dispatch(actions.addQuestion({ quizId, newQuestion }));
+      dispatch(quizActions.addQuestion({ quizId, newQuestion }));
       setQuestion('');
       setCurrentQuestionIndex(quiz.questions.length);
     }
   };
 
   const handleDeleteQuestion = (questionId: number) => {
-    dispatch(actions.deleteQuestion({ quizId, questionId }));
+    dispatch(quizActions.deleteQuestion({ quizId, questionId }));
     if (currentQuestionIndex > quiz.questions.length - 1) {
       setCurrentQuestionIndex(quiz.questions.length - 1);
     }
@@ -90,7 +109,7 @@ const QuizPage = () => {
     };
 
     if (newAnswer.trim()) {
-      dispatch(actions.addAnswer({ quizId, questionId: selectedQuestionId, newAnswer: newAnswerObj }));
+      dispatch(quizActions.addAnswer({ quizId, questionId: selectedQuestionId, newAnswer: newAnswerObj }));
       setNewAnswer('');
     }
   };
@@ -103,7 +122,7 @@ const QuizPage = () => {
   };
 
   const handleDeleteAnswer = (questionId: number, answerId: number) => {
-    dispatch(actions.deleteAnswer({ quizId, questionId, answerId }));
+    dispatch(quizActions.deleteAnswer({ quizId, questionId, answerId }));
   };
 
   const handleNextQuestion = () => {
@@ -119,27 +138,68 @@ const QuizPage = () => {
   };
 
   const handleMarkCorrectAnswer = (questionId: number, answerId: number) => {
-    dispatch(actions.addCorrectAnswer({ quizId, questionId, answerId }));
-    console.log(quiz);
+    dispatch(quizActions.addCorrectAnswer({ quizId, questionId, answerId }));
   };
 
-  const handleAnswerChange = (questionId: number, answerText: string) => {
-    setAnswers(prevAnswers => ({ ...prevAnswers, [questionId]: answerText }));
+  const handleAnswerChange = (questionId: number, answerId: number) => {
+    setAnswers(prevAnswers => {
+      const currentAnswers = prevAnswers[questionId] || [];
+      const newAnswers = currentAnswers.includes(answerId)
+        ? currentAnswers.filter(id => id !== answerId)
+        : [...currentAnswers, answerId];
+      return { ...prevAnswers, [questionId]: newAnswers };
+    });
   };
 
   const handleSubmitQuiz = () => {
+
+    if (!playerName.trim()) {
+      setError('Please, enter your name');
+      return;
+    }
+
     let score = 0;
-    const correctAnswers: number[] = [];
+    const updatedCorrectAnswers: { [key: number]: boolean[] } = {};
 
     quiz.questions.forEach(question => {
-      const correctAnswer = question.answers.find(answer => answer.isCorrect);
-      if (correctAnswer && correctAnswer.text === answers[question.id]) {
+      const correctAnswerIds = question.answers.filter(answer => answer.isCorrect).map(answer => answer.id);
+      const userAnswerIds = answers[question.id] || [];
+      const allCorrect = correctAnswerIds.every(correctId => userAnswerIds.includes(correctId));
+      const noIncorrect = userAnswerIds.every(userId => correctAnswerIds.includes(userId));
+
+      if (allCorrect && noIncorrect) {
         score += 1;
-        correctAnswers.push(question.id);
       }
+
+      updatedCorrectAnswers[question.id] = question.answers.map(answer => {
+        const isUserAnswerCorrect = answer.isCorrect && userAnswerIds.includes(answer.id);
+        const isUserAnswerIncorrect = !answer.isCorrect && userAnswerIds.includes(answer.id);
+        return isUserAnswerCorrect || isUserAnswerIncorrect;
+      });
     });
 
-    navigate(`/quiz-result/${score}/${quiz.questions.length}`, { state: { correctAnswers } });
+    setCorrectAnswers(updatedCorrectAnswers);
+    setTimeExpired(true);
+
+    const maxUserId = Math.max(0, ...users.map(user => user.id)) + 1;
+
+    const newUser = {
+      id: maxUserId,
+      name: playerName,
+      correctAnswersAmount: score,
+    }
+
+    if (playerName.trim()) {
+      dispatch(usersActions.setUsers(newUser));
+    }
+
+    navigate(`/quiz-result/${score}/${quiz.questions.length}`, {
+      state: {
+        answers,
+        correctAnswers: updatedCorrectAnswers,
+        playerName
+      }
+    })
   };
 
   const handleStartQuizMode = () => {
@@ -188,30 +248,31 @@ const QuizPage = () => {
               <h2 className="text-xl font-semibold mb-2">{currentQuestion.text}</h2>
               <button onClick={() => handleDeleteQuestion(currentQuestion.id)} className="text-red-500">Delete</button>
               {currentQuestion.answers.map((answer) => (
-                <div key={
-                  answer.id} className="flex items-center mb-2">
+                <div key={answer.id} className="flex items-center mb-2">
                   <label
-                    className={cn('w-[50%]', {'text-green-500': answer.isCorrect })}
+                    className={cn('w-[50%]', { 'text-green-500': answer.isCorrect })}
                   >
-                  <input
-                    type="checkbox"
-                    name={`question-${currentQuestion.id}`}
-                    value={answer.text}
-                    className='mr-4'
-                    disabled
-                    checked={answers[currentQuestion.id] === answer.text}
-                  />
+                    <input
+                      type="checkbox"
+                      name={`question-${currentQuestion.id}`}
+                      value={answer.id}
+                      className='mr-4'
+                      disabled
+                      checked={answers[currentQuestion.id]?.includes(answer.id) || false}
+                    />
                     {answer.text}
                   </label>
                   <button
                     onClick={() => handleMarkCorrectAnswer(currentQuestion.id, answer.id)}
-                    className="ml-2 bg-green-500 text-white px-2 py-1 rounded"
+                    className={cn('bg-blue-500 text-white px-2 py-1 rounded mr-2', {
+                      'bg-green-500': answer.isCorrect,
+                    })}
                   >
                     Mark Correct
                   </button>
                   <button
                     onClick={() => handleDeleteAnswer(currentQuestion.id, answer.id)}
-                    className="ml-2 bg-red-500 text-white px-2 py-1 rounded"
+                    className="bg-red-500 text-white px-2 py-1 rounded"
                   >
                     Delete
                   </button>
@@ -263,14 +324,21 @@ const QuizPage = () => {
           {quiz.questions.length > 0 && currentQuestionIndex < quiz.questions.length && (
             <div key={currentQuestion.id} className="mb-6 p-4 bg-white shadow-md rounded-md">
               <h2 className="text-xl font-semibold mb-2">{currentQuestion.text}</h2>
-              {currentQuestion.answers.map((answer) => (
-                <label key={answer.id} className="block mb-2">
+              {currentQuestion.answers.map((answer, index) => (
+                <label
+                  key={answer.id}
+                  className={cn('block mb-2', {
+                    'text-blue-500': correctAnswers[currentQuestion.id]?.[index],
+                    'text-orange-500': !correctAnswers[currentQuestion.id]?.[index] && answers[currentQuestion.id]?.includes(answer.id),
+                  })}
+                >
                   <input
                     type="checkbox"
                     name={`question-${currentQuestion.id}`}
-                    value={answer.text}
-                    onChange={() => handleAnswerChange(currentQuestion.id, answer.text)}
+                    value={answer.id}
+                    onChange={() => handleAnswerChange(currentQuestion.id, answer.id)}
                     disabled={timeExpired}
+                    checked={answers[currentQuestion.id]?.includes(answer.id) || false}
                     className="mr-2"
                   />
                   {answer.text}
@@ -283,7 +351,7 @@ const QuizPage = () => {
               <button
                 onClick={handlePreviousQuestion}
                 disabled={currentQuestionIndex === 0}
-                className="bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
+                className="h-[50px] bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
               >
                 Previous question
               </button>
@@ -295,13 +363,30 @@ const QuizPage = () => {
                   Next question
                 </button>
               )}
-              {currentQuestionIndex === quiz.questions.length - 1 && (
-                <button
-                  onClick={handleSubmitQuiz}
-                  className="bg-red-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
-                >
-                  Get the result
-                </button>
+                {currentQuestionIndex === quiz.questions.length - 1 && (
+                <>
+                <div>
+                </div>
+                  <input
+                    type="text"
+                    placeholder="Enter your name"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    className="w-[200px] h-[40px] border border-gray-300 m-auto mb-2 px-2 "
+                    required
+                  />
+                  <div className='relative'>
+                    <button
+                      onClick={handleSubmitQuiz}
+                      className="bg-red-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
+                    >
+                      Get the result
+                    </button>
+                    {error && (
+                      <h1 className='text-red-500 text-lg text-start absolute right-15'>{error}</h1>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}
