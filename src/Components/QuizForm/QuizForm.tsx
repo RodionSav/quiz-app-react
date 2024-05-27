@@ -17,9 +17,12 @@ export const QuizForm = () => {
       title: title,
       questions: []
     };
-    dispatch(setQuizzes(newQuiz));
-    setTitle('');
-    navigate(`/quiz/${maxId}`);
+
+    if (title.trim()) {
+      dispatch(setQuizzes(newQuiz));
+      setTitle('');
+      navigate(`/quiz/${maxId}`);
+    }
   }
 
   const handleTitleChange = (event: { target: { value: SetStateAction<string>; }; }) => {
