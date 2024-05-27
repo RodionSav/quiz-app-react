@@ -5,7 +5,7 @@ import * as quizActions from '../features/quizSlicer';
 import * as usersActions from '../features/usersSlicer';
 import cn from 'classnames';
 
-const QuizPage = () => {
+export const QuizPage = () => {
   const { quizId } = useParams();
   const quizzes = useAppSelector(state => state.quizzes.items);
   const quiz = quizzes.find(q => q.id === Number(quizId));
@@ -395,5 +395,3 @@ const QuizPage = () => {
     </div>
   );
 };
-
-export default QuizPage;
