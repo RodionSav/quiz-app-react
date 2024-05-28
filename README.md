@@ -39,10 +39,3 @@ npm install
 npm start
 ### Open in Browser
 The application will be available at http://localhost:3000.
-
-## Project Structure
-src/
-├── components/   # React components
-├── redux/        # Redux store, slices
-├── styles/       # Tailwind CSS styles
-└── utils/        # Helper functions and utilities
