@@ -21,7 +21,6 @@ The project also includes the following features:
 - **Dynamic Number of Answers**: Users can add and remove answers for each question during quiz creation and editing.
 - **Score Configuration**: Ability to configure the number of points for each question.
 - **Different Answer Types**: Support for various types of answers, such as text and multiple choice.
-- **View Answers**: After completing a quiz, users can review their answers.
 - **Ranking**: Display of user rankings based on quiz results.
 
 ## Technologies Used
