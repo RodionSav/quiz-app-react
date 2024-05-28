@@ -33,13 +33,6 @@ The project also includes the following features:
 - **Redux**
 - **Redux Toolkit**
 
-## How to Run Locally
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/yourusername/quiz-app.git
-   cd quiz-app
-
 ### Install Dependencies
 npm install
 ### Run the Application
