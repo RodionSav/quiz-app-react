@@ -22,7 +22,7 @@ export const QuizForm = () => {
     if (title.trim()) {
       dispatch(actions.saveQuizzes(newQuiz));
       setTitle("");
-      navigate(`/quiz/${maxId}`);
+      navigate(`/quiz/${maxId}/edit`);
     }
   };
 

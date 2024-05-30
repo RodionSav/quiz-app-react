@@ -160,7 +160,7 @@ export const QuizEdit = () => {
         Finish editing
       </Link>
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold mt-20">{quiz.title}</h1>
+        <h1 className="text-xl font-bold mt-20 mb-5">{quiz.title}</h1>
       </div>
       {currentQuestionIndex === quiz.questions.length ? (
         <div className="mb-6 p-4 bg-white shadow-md rounded-md">
