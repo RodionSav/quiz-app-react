@@ -1,33 +1,36 @@
 import { SetStateAction, useState } from "react";
-import { setQuizzes } from "../features/quizSlicer";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { useNavigate } from "react-router-dom";
+import * as actions from '../features/quizSlicer';
 
 export const QuizForm = () => {
-  const [title, setTitle] = useState('');
-  const quizzes = useAppSelector(state => state.quizzes.items);
+  const [title, setTitle] = useState("");
+  const quizzes = useAppSelector((state) => state.quizzes.items);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleCreate = () => {
-    const maxId = Math.max(0, ...quizzes.map(quiz => quiz.id)) + 1;
+    const maxId = Math.max(0, ...quizzes.map((quiz) => quiz.id)) + 1;
 
     const newQuiz = {
       id: maxId,
       title: title,
-      questions: []
+      questions: [],
+      isFinished: false,
     };
 
     if (title.trim()) {
-      dispatch(setQuizzes(newQuiz));
-      setTitle('');
+      dispatch(actions.saveQuizzes(newQuiz));
+      setTitle("");
       navigate(`/quiz/${maxId}`);
     }
-  }
+  };
 
-  const handleTitleChange = (event: { target: { value: SetStateAction<string>; }; }) => {
+  const handleTitleChange = (event: {
+    target: { value: SetStateAction<string> };
+  }) => {
     setTitle(event.target.value);
-  }
+  };
 
   return (
     <div className="flex flex-col items-center mt-10">
@@ -48,6 +51,5 @@ export const QuizForm = () => {
         </button>
       </div>
     </div>
-  )
-}
-
+  );
+};

@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
 import { Quiz } from "../../Types/Quiz";
 import { useAppDispatch } from "../../app/hooks";
-import { deleteQuizzes } from '../features/quizSlicer';
+import { deleteQuizzes } from "../features/quizSlicer";
+import * as actions from "../features/quizSlicer";
 
 type Props = {
-  quiz: Quiz
-}
+  quiz: Quiz;
+};
 
 export const QuizItem: React.FC<Props> = ({ quiz }) => {
   const dispatch = useAppDispatch();
 
   const handleDelete = (quizId: number) => {
     dispatch(deleteQuizzes({ id: quizId }));
+    dispatch(actions.deleteQuiz(quizId));
   };
 
   return (
@@ -26,7 +28,7 @@ export const QuizItem: React.FC<Props> = ({ quiz }) => {
         className="absolute top-3 right-2"
       >
         <img
-          src='images/close.png'
+          src="images/close.png"
           alt="Delete"
           className="w-[20px] h-[20px]"
         />

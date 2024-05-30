@@ -1,96 +1,288 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { Quiz } from '../../Types/Quiz';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { Answer, Question, Quiz } from "../../Types/Quiz";
 
-const storedQuizzes = localStorage.getItem('quizzes');
+const fetchQuizzesFromLocalStorage = () => {
+  return new Promise<Quiz[]>((resolve) => {
+    setTimeout(() => {
+      const storedQuizzes = localStorage.getItem("quizzes");
+      resolve(storedQuizzes ? JSON.parse(storedQuizzes) : []);
+    }, 1000);
+  });
+};
+
+const saveQuizzesToLocalStorage = (quizzes: Quiz[]) => {
+  return new Promise<Quiz[]>((resolve) => {
+    setTimeout(() => {
+      localStorage.setItem("quizzes", JSON.stringify(quizzes));
+      resolve(quizzes);
+    }, 500);
+  });
+};
+
+export const fetchQuizzes = createAsyncThunk<Quiz[]>(
+  "quizzes/fetchQuizzes",
+  async () => {
+    const quizzes = await fetchQuizzesFromLocalStorage();
+    return quizzes;
+  }
+);
+
+export const saveQuizzes = createAsyncThunk(
+  "quizzes/saveQuizzes",
+  async (newQuiz: Quiz, { getState }) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = [...existingQuizzes, newQuiz];
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
+
+export const deleteQuiz = createAsyncThunk(
+  "quizzes/deleteQuiz",
+  async (quizId: number, { getState }) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = existingQuizzes.filter((quiz) => quiz.id !== quizId);
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
+
+export const addQuestionInit = createAsyncThunk(
+  "quizzes/addQuestion",
+  async (
+    { quizId, newQuestion }: { quizId: number; newQuestion: Question },
+    { getState }
+  ) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = existingQuizzes.map((quiz) => {
+      if (quiz.id === quizId) {
+        return {
+          ...quiz,
+          questions: [...quiz.questions, newQuestion],
+        };
+      }
+      return quiz;
+    });
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
+
+export const deleteQuestionInit = createAsyncThunk(
+  "quizzes/deleteQuestion",
+  async (
+    { quizId, questionId }: { quizId: number; questionId: number },
+    { getState }
+  ) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = existingQuizzes.map((quiz) => {
+      if (quiz.id === quizId) {
+        return {
+          ...quiz,
+          questions: quiz.questions.filter(
+            (question) => question.id !== questionId
+          ),
+        };
+      }
+      return quiz;
+    });
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
+
+export const addAnswerInit = createAsyncThunk(
+  "quizzes/addAnswer",
+  async (
+    {
+      quizId,
+      questionId,
+      newAnswer,
+    }: { quizId: number; questionId: number; newAnswer: Answer },
+    { getState }
+  ) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = existingQuizzes.map((quiz) => {
+      if (quiz.id === quizId) {
+        const updatedQuestions = quiz.questions.map((question) => {
+          if (question.id === questionId) {
+            return {
+              ...question,
+              answers: [...question.answers, newAnswer],
+            };
+          }
+          return question;
+        });
+        return {
+          ...quiz,
+          questions: updatedQuestions,
+        };
+      }
+      return quiz;
+    });
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
+
+export const deleteAnswerInit = createAsyncThunk(
+  "quizzes/deleteAnswer",
+  async (
+    {
+      quizId,
+      questionId,
+      answerId,
+    }: { quizId: number; questionId: number; answerId: number },
+    { getState }
+  ) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = existingQuizzes.map((quiz) => {
+      if (quiz.id === quizId) {
+        const updatedQuestions = quiz.questions.map((question) => {
+          if (question.id === questionId) {
+            return {
+              ...question,
+              answers: question.answers.filter(
+                (answer) => answer.id !== answerId
+              ),
+            };
+          }
+          return question;
+        });
+        return {
+          ...quiz,
+          questions: updatedQuestions,
+        };
+      }
+      return quiz;
+    });
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
+
+export const addCorrectAnswerInit = createAsyncThunk(
+  "quizzes/addCorrectAnswerInit",
+  async (
+    {
+      quizId,
+      questionId,
+      answerId,
+    }: { quizId: number; questionId: number; answerId: number },
+    { getState }
+  ) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+
+    const updatedQuizzes = existingQuizzes.map((quiz) => {
+      if (quiz.id === quizId) {
+        const updatedQuestions = quiz.questions.map((question) => {
+          if (question.id === questionId) {
+            const updatedAnswers = question.answers.map((answer) => {
+              if (answer.id === answerId) {
+                return {
+                  ...answer,
+                  isCorrect: !answer.isCorrect,
+                };
+              }
+              return answer;
+            });
+            return {
+              ...question,
+              answers: updatedAnswers,
+            };
+          }
+          return question;
+        });
+        return {
+          ...quiz,
+          questions: updatedQuestions,
+        };
+      }
+      return quiz;
+    });
+
+    await saveQuizzesToLocalStorage(updatedQuizzes);
+    return updatedQuizzes;
+  }
+);
+
+export const makeFinish = createAsyncThunk(
+  "quizzes/addFinish",
+  async (quizId: number, { getState }) => {
+    const state = getState() as { quizzes: QuizState };
+    const existingQuizzes = state.quizzes.items;
+    const updatedQuizzes = existingQuizzes.map((quiz) => {
+      if (quiz.id === quizId) {
+        return {
+          ...quiz,
+          isFinished: true,
+        };
+      }
+      return quiz;
+    });
+    const savedQuizzes = await saveQuizzesToLocalStorage(updatedQuizzes);
+    return savedQuizzes;
+  }
+);
 
 type QuizState = {
-  items: Quiz[],
-}
+  items: Quiz[];
+  loading: boolean;
+};
 
 const initialState: QuizState = {
-  items: storedQuizzes ? JSON.parse(storedQuizzes) : [],
-}
-
-const saveToLocalStorage = (state: QuizState) => {
-  localStorage.setItem('quizzes', JSON.stringify(state.items));
+  items: [],
+  loading: false,
 };
 
 const quizzesState = createSlice({
-  name: 'quizzes',
+  name: "quizzes",
   initialState,
   reducers: {
-    setQuizzes: (state, action) => {
-      state.items.push(action.payload);
-      saveToLocalStorage(state);
-    },
     deleteQuizzes: (state, action) => {
       state.items = state.items.filter((item) => item.id !== action.payload.id);
-      saveToLocalStorage(state);
     },
-    addQuestion: (state, action) => {
-      const { quizId, newQuestion } = action.payload;
-
-      const quiz = state.items.find(q => q.id === parseInt(quizId));
-
-      if (quiz) {
-        quiz.questions.push(newQuestion);
-        saveToLocalStorage(state);
-      } else {
-        console.error(`Quiz not found for ID: ${quizId}`);
-      }
-    },
-    deleteQuestion: (state, action) => {
-      const { quizId, questionId } = action.payload;
-
-      const quiz = state.items.find(q => q.id === parseInt(quizId));
-
-      if (quiz) {
-        quiz.questions = quiz.questions.filter(q => q.id !== questionId);
-        saveToLocalStorage(state);
-      } else {
-        console.error(`Quiz not found for ID: ${quizId}`);
-      }
-    },
-    addAnswer: (state, action) => {
-      const { quizId, questionId, newAnswer } = action.payload;
-
-      const quiz = state.items.find(q => q.id === parseInt(quizId));
-
-      const question = quiz?.questions.find((question) => question.id === questionId);
-
-      question?.answers.push(newAnswer);
-      saveToLocalStorage(state);
-    },
-    deleteAnswer: (state, action) => {
-      const { quizId, questionId, answerId } = action.payload;
-      const quiz = state.items.find(q => q.id === parseInt(quizId));
-      const question = quiz?.questions.find(question => question.id === questionId);
-      if (question) {
-        question.answers = question.answers.filter(answer => answer.id !== answerId);
-        saveToLocalStorage(state);
-      }
-    },
-    addCorrectAnswer: (state, action) => {
-      const { quizId, questionId, answerId } = action.payload;
-      const quiz = state.items.find(quiz => quiz.id === Number(quizId));
-      const question = quiz?.questions.find(q => q.id === questionId);
-      const answer = question?.answers.find(answer => answer.id === answerId);
-
-      if (answer) {
-        answer.isCorrect = !answer.isCorrect;
-      }
-    },
-  }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(saveQuizzes.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(saveQuizzes.fulfilled, (state, action) => {
+        state.items = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchQuizzes.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(addQuestionInit.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(deleteQuestionInit.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(addAnswerInit.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(deleteAnswerInit.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(addCorrectAnswerInit.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(makeFinish.fulfilled, (state, action) => {
+        state.items = action.payload;
+      });
+  },
 });
 
-export const {
-  setQuizzes,
-  deleteQuizzes,
-  addQuestion,
-  deleteQuestion,
-  addAnswer,
-  deleteAnswer,
-  addCorrectAnswer
-} = quizzesState.actions;
+export const { deleteQuizzes } = quizzesState.actions;
 
 export default quizzesState.reducer;

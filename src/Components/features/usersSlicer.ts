@@ -1,43 +1,61 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { Quiz } from '../../Types/Quiz';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { User } from '../../Types/Quiz';
 
-const storedUsers = localStorage.getItem('users');
+const fetchUsersFromLocalStorage = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const storedUsers = localStorage.getItem('users');
+      resolve(storedUsers ? JSON.parse(storedUsers) : []);
+    }, 1000);
+  });
+};
 
-type Users = {
-  id: number,
-  name: string,
-  correctAnswersAmount: number
-}
+const saveUsersToLocalStorage = (users: User[]) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      localStorage.setItem('users', JSON.stringify(users));
+      resolve(users);
+    }, 500);
+  });
+};
+
+export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
+  const users = await fetchUsersFromLocalStorage();
+  return users;
+});
+
+export const saveUsers = createAsyncThunk('users/saveUsers', async (newUser: User, { getState }) => {
+  const state = getState() as { users: UsersState };
+  const existingUsers = state.users.items;
+  const updatedUsers = [...existingUsers, newUser];
+  const savedUsers = await saveUsersToLocalStorage(updatedUsers);
+  return savedUsers;
+});
 
 type UsersState = {
-  items: Users[],
+  items: User[],
+  loading: boolean,
 }
 
 const initialState: UsersState = {
-  items: storedUsers ? JSON.parse(storedUsers) : [],
+  items: [],
+  loading: false,
 }
 
-const saveToLocalStorage = (state: UsersState) => {
-  localStorage.setItem('users', JSON.stringify(state.items));
-};
-
 const usersState = createSlice({
-  name: 'quizzes',
+  name: 'users',
   initialState,
   reducers: {
     setUsers: (state, action) => {
       const newUser = action.payload;
       const existingUser = state.items.find(user => user.name === newUser.name);
-
       if (existingUser) {
         existingUser.correctAnswersAmount += newUser.correctAnswersAmount;
       } else {
         state.items.push(newUser);
       }
-
-      saveToLocalStorage(state);
-    }
-  }
+    },
+  },
 });
 
 export const {

@@ -1,10 +1,10 @@
-interface Answer {
+export interface Answer {
   id: number;
   text: string;
   isCorrect: boolean;
 }
 
-interface Question {
+export interface Question {
   id: number;
   text: string;
   answers: Answer[];
@@ -14,11 +14,11 @@ export interface Quiz {
   id: number;
   title: string;
   questions: Question[];
+  isFinished: boolean;
 }
 
-interface Result {
-  quizId: number;
-  userId: string;
-  score: number;
-  answers: { questionId: number; answerId: number }[];
+export interface User {
+  id: number;
+  name: string;
+  correctAnswersAmount: number;
 }
