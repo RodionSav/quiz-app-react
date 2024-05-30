@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import * as quizActions from "../features/quizSlicer";
@@ -22,6 +22,10 @@ export const QuizEdit = () => {
     setQuestion(e.target.value);
   };
 
+  useEffect(() => {
+    dispatch(quizActions.fetchQuizzes());
+  }, [quizId, dispatch]);
+
   if (!quiz) {
     return (
       <div className="text-center text-red-500 text-lg font-semibold">
@@ -29,6 +33,7 @@ export const QuizEdit = () => {
       </div>
     );
   }
+
 
   const handleAddQuestion = () => {
     const maxQuestionId =
