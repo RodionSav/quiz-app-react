@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import * as quizActions from "../features/quizSlicer";
 import * as usersActions from "../features/usersSlicer";
 import cn from "classnames";
+import { ModalFinishQuiz } from "../ModalFinishQuiz/ModalFinishQuiz";
 
 export const QuizPage = () => {
   const { quizId } = useParams();
@@ -28,6 +29,8 @@ export const QuizPage = () => {
   const navigate = useNavigate();
   const users = useAppSelector((state) => state.users.items);
   const [error, setError] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFinishQuiz, setIsFinishQuiz] = useState(false);
 
   useEffect(() => {
     if (quiz) {
@@ -275,10 +278,13 @@ export const QuizPage = () => {
   };
 
   const handleMakeFinish = () => {
+
     if (quiz.questions.length > 0) {
-      dispatch(quizActions.makeFinish(numberQuizId));
-      setCurrentQuestionIndex(0);
-      setQuizMode(!quizMode);
+      setIsModalOpen(true);
+
+      if (isFinishQuiz) {
+        dispatch(quizActions.makeFinish(numberQuizId));
+      }
     }
   };
 
@@ -290,8 +296,24 @@ export const QuizPage = () => {
     return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
   };
 
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleModalConfirm = () => {
+    setIsModalOpen(false);
+    setIsFinishQuiz(true);
+    navigate('/');
+  };
+
+
   return (
     <div className="p-4 bg-gray-100 min-h-screen">
+       <ModalFinishQuiz
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onConfirm={handleModalConfirm}
+      />
       <h1 className="text-center mb-4 text-3xl font-bold text-blue-600">
         {quiz.title}
       </h1>
@@ -307,7 +329,7 @@ export const QuizPage = () => {
             onClick={handleStartQuizMode}
             className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
           >
-            {quizMode ? "Switch to Edit Mode" : "Test Quiz"}
+            {quizMode ? "Switch to Edit Mode" : "Start Quiz"}
           </button>
           <button
             onClick={handleMakeFinish}
