@@ -18,7 +18,7 @@ export const QuizItem: React.FC<Props> = ({ quiz }) => {
 
   return (
     <div className="w-[300px] h-auto border border-green-500 p-2 mb-4 relative">
-      <Link to={`/quiz/${quiz.id}`} className="block">
+      <Link to={`/quiz/${quiz.id}/edit`} className="block">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-bold">{quiz.title}</h1>
         </div>
