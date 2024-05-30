@@ -307,7 +307,7 @@ export const QuizPage = () => {
             onClick={handleStartQuizMode}
             className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
           >
-            {quizMode ? "Switch to Edit Mode" : "Start Quiz"}
+            {quizMode ? "Switch to Edit Mode" : "Test Quiz"}
           </button>
           <button
             onClick={handleMakeFinish}
