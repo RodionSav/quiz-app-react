@@ -23,6 +23,9 @@ export const QuizItem: React.FC<Props> = ({ quiz }) => {
           <h1 className="text-lg font-bold">{quiz.title}</h1>
         </div>
       </Link>
+      <Link to={`/quiz/${quiz.id}/edit`} className="absolute top-2 right-11">
+        <h1>Edit</h1>
+      </Link>
       <button
         onClick={() => handleDelete(quiz.id)}
         className="absolute top-3 right-2"
